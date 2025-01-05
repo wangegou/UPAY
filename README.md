@@ -39,13 +39,15 @@ https://huojian.iosapp.icu/
 
 ### 插件
 
-独角数卡 ：插件支持原 EPUSDT 插件，可以参考 EPUSDT 的插件使用方法
+独角数卡 ：插件支持原 EPUSDT 插件
+独角数卡后台 ：秘钥里填写：http://127.0.0.1:8080/api/create_order
 
 # 反馈
 
 欢迎反馈问题，请在 GitHub 上提交问题，或者在项目中提交 PR。
 
-电报联系：https://t.me/hellokvm
+电报：https://t.me/hellokvm
+邮箱：8888@iosapp.icu
 
 # 声明
 
