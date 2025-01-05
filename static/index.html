@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UPAY支付页面</title>
+    <link rel="stylesheet" href="/static/css/layui.css" />
+    <style>
+      /* 样式与之前一致 */
+      body {
+        background-color: #f5f5f5;
+        margin: 0;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 20px auto;
+        background: #fff;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .top-bar {
+        padding: 8px 20px;
+        text-align: right;
+        border-bottom: 1px solid #eee;
+      }
+      .header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+      }
+      .header img {
+        height: 32px;
+        vertical-align: middle;
+        margin-right: 10px;
+      }
+      .order-info {
+        background: #f8f8f8;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .order-amount {
+        color: #ff5722;
+        font-size: 16px;
+      }
+      .main-content {
+        display: flex;
+        padding: 20px;
+      }
+      .qr-section {
+        flex: 3;
+        text-align: center;
+        /* border: 1px solid #eee; */
+        border-right: 1px solid #f5f5f5;
+      }
+      .sidebar {
+        flex: 1;
+        padding-left: 20px;
+        height: 100%;
+        /* border: 1px solid #eee; */
+      }
+      .qr-amount {
+        font-size: 24px;
+        margin: 20px 0;
+      }
+      .qr-code {
+        width: 200px;
+        height: 200px;
+        margin: 20px auto;
+      }
+      .qr-tip {
+        color: #666;
+        margin: 10px 0;
+      }
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #010001;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .countdown-container {
+        text-align: center;
+        background: #fff;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .countdown-timer {
+        font-size: 36px;
+        color: #ff5722;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 顶部欢迎语 -->
+      <div class="top-bar">
+        <span>你好，欢迎使用USDT支付！</span>
+        <span style="margin-left: 20px">帮助</span>
+      </div>
+
+      <!-- 头部标题 -->
+      <div class="header">
+        <img src="/static/img/logo.png" alt="支付宝" />
+        <span>我的收银台</span>
+      </div>
+
+      <!-- 订单信息 -->
+      <div class="order-info">
+        <div>
+          <span>订单编号：{{.TradeId}}</span>
+          <hr />
+          <span> 收款方：{{.AppName}}</span>
+          <hr />
+          <span>收款地址：</span>
+          <span id="copy-token">{{.Token}}</span>
+        </div>
+        <div class="order-amount">
+          {{.ActualAmount}} <span style="font-size: 12px">USDT-TRC20</span>
+        </div>
+      </div>
+
+      <!-- 主要内容区 -->
+      <div
+        class="main-content"
+        style="display: flex; justify-content: center; align-items: center"
+      >
+        <!-- 左侧扫码区域 -->
+        <div class="qr-section">
+          <h3>扫一扫付款（USDT-TRC20）</h3>
+          <div class="qr-amount" style="color: #ff5722">
+            {{.ActualAmount}} USDT
+          </div>
+          <div class="qr-code"></div>
+
+          <div class="qr-tip"></div>
+          <div style="margin-top: 20px">
+            <div class="timer">
+              <div class="value" style="font-size: 36px; color: red">
+                <span class="hours">00</span>
+                <i>:</i>
+                <span class="minutes">00</span>
+                <i>:</i>
+                <span class="seconds">00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 右侧边栏 -->
+        <div
+          class="sidebar"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+          "
+        >
+          <div style="text-align: center">
+            <div>
+              <img
+                src="/static/img/telegram.png"
+                alt="客服图标"
+                style="width: 48px"
+              />
+              <div style="margin-top: 10px">
+                <button class="layui-btn layui-btn-primary">
+                  客服：{{.CustomerServiceContact}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr />
+      <!-- 页脚 -->
+      <div class="footer">
+        <p>到账金额需要与上面显示的金额一致，否则系統无法确认！！</p>
+      </div>
+    </div>
+
+    <script src="/static/js/layui.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/jquery.qrcode.min.js"></script>
+    <script src="/static/js/clipboard.min.js"></script>
+
+    <script>
+      layui.use(function () {
+          var layer = layui.layer;
+
+          // 支付时间倒计时
+          function clock() {
+              const timeout = new Date({{.ExpirationTime}});
+              if (isNaN(timeout)) {
+                  layer.alert("无效的过期时间", { icon: 5 });
+                  return;
+              }
+
+              const now = Date.now();  // 获取当前毫秒时间戳
+              const ms = timeout - now;
+
+              if (ms <= 0) {
+                  layer.alert("支付超时，请重新发起支付！", { icon: 5 });
+                  window.location.href = "{{.RedirectUrl}}";
+                  return;
+              }
+
+              const seconds = Math.floor(ms / 1000) % 60;
+              const minutes = Math.floor(ms / (1000 * 60)) % 60;
+              const hours = Math.floor(ms / (1000 * 60 * 60));
+              document.querySelector('.hours').textContent = hours.toString().padStart(2, '0');
+              document.querySelector('.minutes').textContent = minutes.toString().padStart(2, '0');
+              document.querySelector('.seconds').textContent = seconds.toString().padStart(2, '0');
+
+              setTimeout(clock, 1000);
+          }
+
+          clock();
+
+          // 生成二维码
+          $('.qr-code').qrcode({
+              text: "{{.Token}}",
+              width: 200,
+              height: 200,
+              foreground: "#000000",
+              background: "#ffffff",
+          });
+
+          // 金额和钱包复制功能
+          new ClipboardJS('#copy-amount').on('success', () => layer.msg('复制金额成功', { icon: 1 })).on('error', () => layer.msg('复制金额失败', { icon: 5 }));
+          new ClipboardJS('#copy-token').on('success', () => layer.msg('复制钱包地址成功', { icon: 1 })).on('error', () => layer.msg('复制钱包地址失败', { icon: 5 }));
+
+          // 检查支付状态
+          function checkOrderStatus() {
+              $.ajax({
+                  type: "GET",
+                  dataType: "json",
+                  url: `/pay/check-status/{{.TradeId}}`,
+                  timeout: 10000,
+                  success(response) {
+                      if (response.data.status === 2) {
+                          layer.msg('支付成功，正在跳转中...', { icon: 16, shade: 0.01, time: 20000 });
+                          window.location.href = "{{.RedirectUrl}}";
+                      } else {
+                          setTimeout(checkOrderStatus, 2000);
+                      }
+                  },
+                  error(jqXHR, textStatus, errorThrown) {
+                      console.error("检查支付状态时发生错误:", textStatus, errorThrown);
+                      setTimeout(checkOrderStatus, 2000);
+                  },
+              });
+          }
+
+          checkOrderStatus(); // 直接调用检查支付状态
+      });
+    </script>
+  </body>
+</html>

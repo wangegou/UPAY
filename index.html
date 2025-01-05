@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Order</title>
+    <script>
+      async function createOrder() {
+        const url = "http://localhost:8080/api/create_order";
+
+        // 请求参数
+        const orderData = {
+          order_id: "20220201030210321",
+          amount: 42.02,
+          notify_url: "http://example.com/notify",
+          redirect_url: "http://example.com/redirect",
+          signature: "f45087555289fe393c28ea01ce355efd",
+        };
+
+        try {
+          // 发起 POST 请求
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(orderData),
+          });
+
+          // 检查响应是否成功
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          // 打印返回数据
+          console.log("Response:", result);
+
+          // 检查返回的数据并重定向
+          if (result.data && result.data.payment_url) {
+            window.location.href = result.data.payment_url;
+          } else {
+            alert("未找到支付链接！");
+          }
+        } catch (error) {
+          console.error("请求出错:", error);
+          alert("请求失败，请检查控制台日志。");
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Create Order</h1>
+    <button onclick="createOrder()">提交订单</button>
+  </body>
+</html>
