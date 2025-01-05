@@ -25,7 +25,8 @@
 使用方法可以参考原项目：https://github.com/assimon/epusdt/blob/master/wiki/BT_RUN.md
 
 1. 下载项目
-2. 运行脚本
+2. 将 env. example 改为.env 并填写信息
+3. 运行脚本
 
 启动命令为：UPAY 所在目录+U_PAY 执行文件
 

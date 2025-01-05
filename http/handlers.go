@@ -7,7 +7,6 @@ import (
 	"U_PAY/dto"
 	"U_PAY/log"
 	"U_PAY/mq"
-	"U_PAY/notification"
 	"context"
 	"crypto/rand"
 	"fmt"
@@ -211,7 +210,7 @@ OuterLoop:
 	log.Logger.Info("创建订单记录成功")
 
 	// 测试发送Bark通知
-	notification.Start(order)
+	// notification.Start(order)
 
 	// 获取配置文件中的订单过期时间并转换为分钟
 	/* orderExpirationMinutes := viper.GetInt("order_expiration_time")
