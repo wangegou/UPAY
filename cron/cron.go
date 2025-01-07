@@ -170,8 +170,8 @@ func sendAsyncPost(url string, notification dto.PaymentNotification_request) (st
 		// 读取服务器响应
 		buf := new(bytes.Buffer)
 		_, _ = buf.ReadFrom(resp.Body)
-		if buf.String() == "ok" {
-			fmt.Println("发送成功，服务器返回字符串 'ok'")
+		if buf.String() == "ok" || buf.String() == "success" {
+			fmt.Println("发送成功，服务器返回字符串 'ok' 或 'success")
 			return "ok", nil
 
 		}
