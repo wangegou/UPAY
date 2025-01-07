@@ -56,11 +56,20 @@ func AuthMiddleware() gin.HandlerFunc {
 		} */
 
 		params := []string{
-			fmt.Sprintf("amount=%.2f", requestParams.Amount),
+			fmt.Sprintf("amount=%x", requestParams.Amount),
 			fmt.Sprintf("notify_url=%s", requestParams.NotifyURL),
 			fmt.Sprintf("order_id=%s", requestParams.OrderID),
 			fmt.Sprintf("redirect_url=%s", requestParams.RedirectURL),
 		}
+		// 打印拼接的参数
+		log.Logger.Info("拼接的参数", zap.Any("params", params))
+
+		// 打印原字符串
+		/*
+			log.Logger.Info("金额:", zap.Float64("amount", requestParams.Amount))
+			log.Logger.Info("通知URL:", zap.String("notify_url", requestParams.NotifyURL))
+			log.Logger.Info("订单ID:", zap.String("order_id", requestParams.OrderID))
+			log.Logger.Info("重定向URL:", zap.String("redirect_url", requestParams.RedirectURL)) */
 
 		/* // 排序拼接
 		var keys []string
@@ -88,7 +97,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		/* 		queryString := fmt.Sprintf("amount=%f&notify_url=%s&order_id=%s&redirect_url=%s%s",
 		requestParams.Amount, requestParams.NotifyURL, requestParams.OrderID, requestParams.RedirectURL, config.GetApiAuthToken())
 		*/
-		log.Logger.Info(fmt.Sprintf("%x", md5.Sum([]byte(signatureString))))
+		// 打印一下传入的签名
+		log.Logger.Info("传入的签名", zap.String("signature", requestParams.Signature))
 		// 对拼接的字符串进行md5加密，并验证如果传入的签名和计算的签名一致，则继续执行下一个中间件或者处理函数
 
 		Signature := fmt.Sprintf("%x", md5.Sum([]byte(signatureString)))
