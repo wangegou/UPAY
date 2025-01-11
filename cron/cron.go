@@ -199,8 +199,8 @@ func generateSignature(data dto.PaymentNotification_request) string {
 	params := []string{
 		fmt.Sprintf("trade_id=%s", data.TradeID),
 		fmt.Sprintf("order_id=%s", data.OrderID),
-		fmt.Sprintf("amount=%f", data.Amount),
-		fmt.Sprintf("actual_amount=%f", data.ActualAmount),
+		fmt.Sprintf("amount=%g", data.Amount),
+		fmt.Sprintf("actual_amount=%g", data.ActualAmount),
 		fmt.Sprintf("token=%s", data.Token),
 		fmt.Sprintf("block_transaction_id=%s", data.BlockTransactionID),
 		fmt.Sprintf("status=%d", data.Status),

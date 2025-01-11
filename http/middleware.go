@@ -56,7 +56,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		} */
 
 		params := []string{
-			fmt.Sprintf("amount=%x", requestParams.Amount),
+			fmt.Sprintf("amount=%g", requestParams.Amount),
 			fmt.Sprintf("notify_url=%s", requestParams.NotifyURL),
 			fmt.Sprintf("order_id=%s", requestParams.OrderID),
 			fmt.Sprintf("redirect_url=%s", requestParams.RedirectURL),
