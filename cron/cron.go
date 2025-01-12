@@ -213,7 +213,7 @@ func generateSignature(data dto.PaymentNotification_request) string {
 	// 使用 strings.Join 连接排序后的参数
 	signatureString := strings.Join(params, "&") + config.GetApiAuthToken()
 	// 打印拼接的参数
-	log.Logger.Info("异步回调的拼接的参数", zap.Any("params", params))
+	log.Logger.Info("异步回调的拼接的参数", zap.Any("signatureString", signatureString))
 
 	// 计算 MD5 哈希值
 	hash := md5.Sum([]byte(signatureString))
