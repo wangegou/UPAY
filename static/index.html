@@ -115,9 +115,15 @@
           <span> 收款方：{{.AppName}}</span>
           <hr />
           <span>收款地址：</span>
-          <span id="copy-token">{{.Token}}</span>
+          <span id="copy-token" data-clipboard-text="{{.Token}}"
+            >{{.Token}}</span
+          >
         </div>
-        <div class="order-amount">
+        <div
+          class="order-amount"
+          id="copy-amount"
+          data-clipboard-text="{{.ActualAmount}}"
+        >
           {{.ActualAmount}} <span style="font-size: 12px">USDT-TRC20</span>
         </div>
       </div>
