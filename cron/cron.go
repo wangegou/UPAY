@@ -3,6 +3,7 @@ package cron
 // 设置定义任务检查数据库订单表中有未支付的订单，去请求tron的api查询是否支付成功，如果钱包和金额都正确，则将订单状态改为已支付
 
 import (
+	"U_PAY/config"
 	"U_PAY/db/rdb"
 	"U_PAY/db/sdb"
 	"U_PAY/log"
@@ -210,7 +211,9 @@ func generateSignature(data dto.PaymentNotification_request) string {
 	sort.Strings(params)
 
 	// 使用 strings.Join 连接排序后的参数
-	signatureString := strings.Join(params, "&")
+	signatureString := strings.Join(params, "&") + config.GetApiAuthToken()
+	// 打印拼接的参数
+	log.Logger.Info("异步回调的拼接的参数", zap.Any("params", params))
 
 	// 计算 MD5 哈希值
 	hash := md5.Sum([]byte(signatureString))
