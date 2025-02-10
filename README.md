@@ -22,7 +22,7 @@
 
 # 快速开始
 
-使用方法可以参考原项目：https://github.com/assimon/epusdt/blob/master/wiki/BT_RUN.md
+视频教程：https://www.youtube.com/watch?v=gR43V3aFhk0
 
 1. 下载项目
 2. 将 env. example 改为.env 并填写信息
@@ -31,6 +31,10 @@
 启动命令为：UPAY 所在目录+U_PAY 执行文件
 
 与原项目的使用差别是：1 不需要初始化数据库，2，启动命令后面无需任何参数
+
+# API 文档
+
+参照原 EPUSDT 的即可
 
 ### 在线测试：
 
