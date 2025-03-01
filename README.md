@@ -54,6 +54,7 @@ https://huojian.iosapp.icu/
 欢迎反馈问题，请在 GitHub 上提交问题，或者在项目中提交 PR。
 
 电报：https://t.me/hellokvm
+群组：https://t.me/UPAY_BUG
 邮箱：8888@iosapp.icu
 
 # 声明
