@@ -82,6 +82,8 @@ func GetTransactions(toAddress string, startTime int64, endTime int64) TransferD
 	params.Add("confirm", "true")
 	params.Add("start_timestamp", fmt.Sprintf("%d", startTime))
 	params.Add("end_timestamp", fmt.Sprintf("%d", endTime))
+	// 增加合约地址
+	params.Add("contract_address", "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
 
 	// 使用 url 拼接完整的 URL
 	finalURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
