@@ -49,6 +49,8 @@ https://huojian.iosapp.icu/
 二次元|荔枝发卡 ：插件支持原 EPUSDT 插件
 对接文档：https://blog.hi-kvm.com/archives/244.html
 
+彩虹易支付：在本项目 plugins 目录下；
+
 # 反馈
 
 欢迎反馈问题，请在 GitHub 上提交问题，或者在项目中提交 PR。
