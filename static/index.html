@@ -1,267 +1,722 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UPAY支付页面</title>
-    <link rel="stylesheet" href="/static/css/layui.css" />
+    <title>USDT支付</title>
     <style>
-      /* 样式与之前一致 */
-      body {
-        background-color: #f5f5f5;
+      * {
         margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
+
+      :root {
+        --primary: #1d2939;
+        --secondary: #475467;
+        --accent: #12b76a;
+        --danger: #f04438;
+        --border: #e4e7ec;
+        --surface: #fcfcfd;
+        --background: #f9fafb;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--background);
+        color: var(--primary);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
       .container {
-        max-width: 1000px;
-        margin: 20px auto;
-        background: #fff;
-        border-radius: 15px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 24px 16px;
       }
-      .top-bar {
-        padding: 8px 20px;
-        text-align: right;
-        border-bottom: 1px solid #eee;
+
+      .card {
+        background: var(--surface);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 24px;
       }
+
       .header {
-        padding: 20px;
-        border-bottom: 1px solid #eee;
-      }
-      .header img {
-        height: 32px;
-        vertical-align: middle;
-        margin-right: 10px;
-      }
-      .order-info {
-        background: #f8f8f8;
-        padding: 15px 20px;
         display: flex;
+        align-items: center;
         justify-content: space-between;
+        margin-bottom: 32px;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .logo img {
+        width: 28px;
+        height: 28px;
+      }
+
+      .logo span {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      .amount-section {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+
+      .amount {
+        font-size: 40px;
+        font-weight: 700;
+        color: var(--primary);
+        font-feature-settings: "tnum";
+      }
+
+      .amount small {
+        font-size: 16px;
+        font-weight: 500;
+        margin-left: 4px;
+      }
+
+      .address-section {
+        margin: 24px 0;
+      }
+
+      .address-container {
+        width: 100%;
+        padding: 0 16px;
+      }
+
+      .address {
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--accent);
+        background: rgba(18, 183, 106, 0.1);
+        padding: 12px 16px;
+        border-radius: 8px;
+        text-align: center;
+        width: 100%;
+        word-break: break-all;
+        line-height: 1.4;
+      }
+
+      .qr-section {
+        background: var(--background);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
         align-items: center;
       }
-      .order-amount {
-        color: #ff5722;
-        font-size: 16px;
-      }
-      .main-content {
-        display: flex;
-        padding: 20px;
-      }
-      .qr-section {
-        flex: 3;
-        text-align: center;
-        /* border: 1px solid #eee; */
-        border-right: 1px solid #f5f5f5;
-      }
-      .sidebar {
-        flex: 1;
-        padding-left: 20px;
-        height: 100%;
-        /* border: 1px solid #eee; */
-      }
-      .qr-amount {
-        font-size: 24px;
-        margin: 20px 0;
-      }
+
       .qr-code {
-        width: 200px;
-        height: 200px;
-        margin: 20px auto;
+        width: 180px;
+        height: 180px;
+        padding: 8px;
+        background: white;
+        border-radius: 12px;
+        margin: 0 auto 16px;
+        display: inline-block;
       }
-      .qr-tip {
-        color: #666;
-        margin: 10px 0;
+
+      .countdown {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        color: var(--secondary);
+        margin-top: 24px;
       }
-      .footer {
-        text-align: center;
-        padding: 20px;
-        color: #010001;
-        font-size: 24px;
-        font-weight: bold;
+
+      .countdown span {
+        color: var(--danger);
+        font-weight: 600;
+        font-feature-settings: "tnum";
       }
-      .countdown-container {
-        text-align: center;
-        background: #fff;
-        padding: 30px;
+
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 24px 0;
+      }
+
+      .warning {
+        background: #fef3f2;
         border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 12px 16px;
+        color: var(--danger);
+        font-size: 14px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
       }
-      .countdown-timer {
-        font-size: 36px;
-        color: #ff5722;
-        font-weight: bold;
+
+      .warning svg {
+        flex-shrink: 0;
+      }
+
+      .details-toggle {
+        color: var(--secondary);
+        background: none;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0 auto;
+        padding: 8px 16px;
+      }
+
+      .details-toggle:hover {
+        color: var(--primary);
+      }
+
+      .details-content {
+        display: none;
+        padding: 12px;
+        background: var(--background);
+        border-radius: 8px;
+        margin-top: 8px;
+      }
+
+      .details-content.show {
+        display: block;
+      }
+
+      .details-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 13px;
+      }
+
+      .details-row:first-child {
+        padding-top: 0;
+      }
+
+      .details-row:last-child {
+        padding-bottom: 0;
+      }
+
+      .info-label {
+        color: var(--secondary);
+      }
+
+      .info-value {
+        color: var(--primary);
+        font-weight: 500;
+      }
+
+      .support {
+        text-align: center;
+      }
+
+      .support a {
+        color: var(--secondary);
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .support a:hover {
+        color: var(--primary);
+      }
+
+      @media (max-width: 480px) {
+        .container {
+          padding: 16px;
+        }
+
+        .amount {
+          font-size: 32px;
+        }
+
+        .qr-code {
+          width: 160px;
+          height: 160px;
+        }
+      }
+
+      /* 添加 Toast 样式 */
+      .toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+      }
+
+      /* 添加支付成功弹窗样式 */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        text-align: center;
+        max-width: 300px;
+        width: 90%;
+      }
+
+      .modal-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+      }
+
+      .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--accent);
+      }
+
+      .modal-message {
+        color: var(--secondary);
+        margin-bottom: 20px;
+      }
+
+      /* PC 端适配 */
+      @media (min-width: 768px) {
+        .container {
+          max-width: 800px;
+          padding: 40px;
+        }
+
+        .card {
+          padding: 32px;
+        }
+
+        /* 调整金额显示 */
+        .amount {
+          font-size: 48px;
+        }
+
+        .amount small {
+          font-size: 20px;
+        }
+
+        /* 调整主要内容区域布局 */
+        .main-content {
+          display: flex;
+          gap: 32px;
+          margin: 32px 0;
+        }
+
+        .qr-section {
+          flex: 2;
+          margin-bottom: 0;
+        }
+
+        .info-section {
+          flex: 3;
+          padding: 24px;
+          background: var(--surface);
+          border-radius: 16px;
+          border: 1px solid var(--border);
+        }
+
+        /* 调整二维码大小 */
+        .qr-code {
+          width: 240px;
+          height: 240px;
+          padding: 12px;
+          margin-bottom: 24px;
+        }
+
+        /* 调整地址显示 */
+        .address-section {
+          margin: 32px 0;
+        }
+
+        .address {
+          font-size: 15px;
+          padding: 16px 24px;
+        }
+
+        /* 调整倒计时显示 */
+        .countdown {
+          font-size: 16px;
+        }
+
+        /* 调整警告提示 */
+        .warning {
+          font-size: 15px;
+          padding: 16px 24px;
+        }
+
+        /* 调整订单详情 */
+        .details-content {
+          padding: 16px;
+        }
+
+        .details-row {
+          font-size: 14px;
+          padding: 12px 0;
+        }
+
+        /* 调整客服链接 */
+        .support a {
+          font-size: 15px;
+          padding: 12px 24px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          transition: all 0.3s ease;
+        }
+
+        .support a:hover {
+          background: var(--background);
+          border-color: var(--primary);
+        }
+
+        /* 调整弹窗大小 */
+        .modal-content {
+          max-width: 400px;
+          padding: 32px;
+        }
+
+        .modal-icon {
+          width: 64px;
+          height: 64px;
+        }
+
+        .modal-title {
+          font-size: 24px;
+        }
+
+        .modal-message {
+          font-size: 16px;
+        }
+
+        /* 调整 Toast 提示 */
+        .toast {
+          padding: 16px 32px;
+          font-size: 15px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <!-- 顶部欢迎语 -->
-      <div class="top-bar">
-        <span>你好，欢迎使用USDT支付！</span>
-        <span style="margin-left: 20px">帮助</span>
-      </div>
-
-      <!-- 头部标题 -->
-      <div class="header">
-        <img src="/static/img/logo.png" alt="支付宝" />
-        <span>我的收银台</span>
-      </div>
-
-      <!-- 订单信息 -->
-      <div class="order-info">
-        <div>
-          <span>订单编号：{{.TradeId}}</span>
-          <hr />
-          <span> 收款方：{{.AppName}}</span>
-          <hr />
-          <span>收款地址：</span>
-          <span id="copy-token" data-clipboard-text="{{.Token}}"
-            >{{.Token}}</span
-          >
-        </div>
-        <div
-          class="order-amount"
-          id="copy-amount"
-          data-clipboard-text="{{.ActualAmount}}"
-        >
-          {{.ActualAmount}} <span style="font-size: 12px">USDT-TRC20</span>
-        </div>
-      </div>
-
-      <!-- 主要内容区 -->
-      <div
-        class="main-content"
-        style="display: flex; justify-content: center; align-items: center"
-      >
-        <!-- 左侧扫码区域 -->
-        <div class="qr-section">
-          <h3>扫一扫付款（USDT-TRC20）</h3>
-          <div class="qr-amount" style="color: #ff5722">
-            {{.ActualAmount}} USDT
+      <div class="card">
+        <div class="header">
+          <div class="logo">
+            <img
+              src="data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='14' cy='14' r='14' fill='%2326A17B'/%3E%3Cpath d='M14 6V22C18.4183 22 22 18.4183 22 14C22 9.58172 18.4183 6 14 6Z' fill='white'/%3E%3C/svg%3E"
+              alt="USDT"
+            />
+            <span>USDT-TRC20</span>
           </div>
-          <div class="qr-code"></div>
+        </div>
 
-          <div class="qr-tip"></div>
-          <div style="margin-top: 20px">
-            <div class="timer">
-              <div class="value" style="font-size: 36px; color: red">
-                <span class="hours">00</span>
-                <i>:</i>
-                <span class="minutes">00</span>
-                <i>:</i>
-                <span class="seconds">00</span>
+        <div class="amount-section">
+          <div class="amount">{{.ActualAmount}} <small>USDT</small></div>
+        </div>
+
+        <div class="main-content">
+          <!-- 左侧二维码区域 -->
+          <div class="qr-section">
+            <div
+              class="qr-code"
+              onclick="copyAddress()"
+              style="cursor: pointer"
+              title="点击复制地址"
+            ></div>
+
+            <div class="countdown">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 14A6 6 0 108 2a6 6 0 000 12zM8 5v3l2 2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              剩余支付时间：<span class="timer">
+                <span class="hours">00</span>:<span class="minutes">00</span
+                >:<span class="seconds">00</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 右侧信息区域 -->
+          <div class="info-section">
+            <div class="address-section">
+              <div class="address-container">
+                <div
+                  class="address"
+                  onclick="copyAddress()"
+                  style="cursor: pointer"
+                  title="点击复制地址"
+                >
+                  {{.Token}}
+                </div>
+              </div>
+            </div>
+
+            <div class="warning">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M8 5v4M8 11.5v.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M8 14A6 6 0 108 2a6 6 0 000 12z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+              </svg>
+              <span>请确保支付金额与显示金额一致，否则无法到账！</span>
+            </div>
+
+            <button class="details-toggle" onclick="toggleDetails()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M4 6l4 4 4-4"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>订单详情</span>
+            </button>
+
+            <div class="details-content" id="details">
+              <div class="details-row">
+                <span class="info-label">订单号</span>
+                <span class="info-value">{{.TradeId}}</span>
+              </div>
+              <div class="details-row">
+                <span class="info-label">收款方</span>
+                <span class="info-value">{{.AppName}}</span>
               </div>
             </div>
           </div>
         </div>
-        <!-- 右侧边栏 -->
-        <div
-          class="sidebar"
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-          "
-        >
-          <div style="text-align: center">
-            <div>
-              <img
-                src="/static/img/telegram.png"
-                alt="客服图标"
-                style="width: 48px"
+
+        <div class="support">
+          <a href="https://t.me/{{.CustomerServiceContact}}" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M8 14A6 6 0 108 2a6 6 0 000 12zM6 8h4M8 6v4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
               />
-              <div style="margin-top: 10px">
-                <button class="layui-btn layui-btn-primary">
-                  客服：{{.CustomerServiceContact}}
-                </button>
-              </div>
-            </div>
-          </div>
+            </svg>
+            遇到问题？联系客服
+          </a>
         </div>
-      </div>
-      <hr />
-      <!-- 页脚 -->
-      <div class="footer">
-        <p>到账金额需要与上面显示的金额一致，否则系統无法确认！！</p>
       </div>
     </div>
 
-    <script src="/static/js/layui.js"></script>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/jquery.qrcode.min.js"></script>
-    <script src="/static/js/clipboard.min.js"></script>
-
     <script>
-      layui.use(function () {
-          var layer = layui.layer;
+      // Toast 提示函数
+      function showToast(message, duration = 1500) {
+        // 移除现有的 toast
+        const existingToast = document.querySelector('.toast');
+        if (existingToast) {
+          document.body.removeChild(existingToast);
+        }
 
-          // 支付时间倒计时
-          function clock() {
-              const timeout = new Date({{.ExpirationTime}});
-              if (isNaN(timeout)) {
-                  layer.alert("无效的过期时间", { icon: 5 });
-                  return;
-              }
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
 
-              const now = Date.now();  // 获取当前毫秒时间戳
-              const ms = timeout - now;
+        // 强制重绘
+        toast.offsetHeight;
+        toast.classList.add('show');
 
-              if (ms <= 0) {
-                  layer.alert("支付超时，请重新发起支付！", { icon: 5 });
-                  window.location.href = "{{.RedirectUrl}}";
-                  return;
-              }
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+            document.body.removeChild(toast);
+          }, 300);
+        }, duration);
+      }
 
-              const seconds = Math.floor(ms / 1000) % 60;
-              const minutes = Math.floor(ms / (1000 * 60)) % 60;
-              const hours = Math.floor(ms / (1000 * 60 * 60));
-              document.querySelector('.hours').textContent = hours.toString().padStart(2, '0');
-              document.querySelector('.minutes').textContent = minutes.toString().padStart(2, '0');
-              document.querySelector('.seconds').textContent = seconds.toString().padStart(2, '0');
+      // 显示支付成功弹窗
+      function showSuccessModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <svg class="modal-icon" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="24" fill="${getComputedStyle(document.documentElement).getPropertyValue('--accent')}"/>
+              <path d="M16 24l6 6 12-12" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="modal-title">支付成功</div>
+            <div class="modal-message">正在跳转到商户页面...</div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
 
-              setTimeout(clock, 1000);
+      // 优化复制功能
+      function copyAddress() {
+        const address = "{{.Token}}";
+
+        // 对于不支持 clipboard API 的浏览器，使用传统方法
+        if (!navigator.clipboard) {
+          const textArea = document.createElement('textarea');
+          textArea.value = address;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.select();
+
+          try {
+            document.execCommand('copy');
+            showToast('地址已复制');
+          } catch (err) {
+            showToast('复制失败，请手动复制');
+          } finally {
+            document.body.removeChild(textArea);
+          }
+          return;
+        }
+
+        // 使用现代 Clipboard API
+        navigator.clipboard.writeText(address)
+          .then(() => showToast('地址已复制'))
+          .catch(() => showToast('复制失败，请手动复制'));
+      }
+
+      // 优化倒计时显示
+      function formatTime(ms) {
+        const hours = Math.floor(ms / (1000 * 60 * 60));
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+        return {
+          hours: hours.toString().padStart(2, '0'),
+          minutes: minutes.toString().padStart(2, '0'),
+          seconds: seconds.toString().padStart(2, '0')
+        };
+      }
+
+      function clock() {
+        const timeout = new Date({{.ExpirationTime}});
+        if (isNaN(timeout)) {
+          showToast('无效的过期时间');
+          return;
+        }
+
+        const updateClock = () => {
+          const now = Date.now();
+          const ms = timeout - now;
+
+          if (ms <= 0) {
+            showToast('支付已超时');
+            setTimeout(() => {
+              window.location.href = "{{.RedirectUrl}}";
+            }, 1500);
+            return;
           }
 
-          clock();
+          const time = formatTime(ms);
+          document.querySelector('.hours').textContent = time.hours;
+          document.querySelector('.minutes').textContent = time.minutes;
+          document.querySelector('.seconds').textContent = time.seconds;
 
-          // 生成二维码
-          $('.qr-code').qrcode({
-              text: "{{.Token}}",
-              width: 200,
-              height: 200,
-              foreground: "#000000",
-              background: "#ffffff",
-          });
+          requestAnimationFrame(updateClock);
+        };
 
-          // 金额和钱包复制功能
-          new ClipboardJS('#copy-amount').on('success', () => layer.msg('复制金额成功', { icon: 1 })).on('error', () => layer.msg('复制金额失败', { icon: 5 }));
-          new ClipboardJS('#copy-token').on('success', () => layer.msg('复制钱包地址成功', { icon: 1 })).on('error', () => layer.msg('复制钱包地址失败', { icon: 5 }));
+        updateClock();
+      }
 
-          // 检查支付状态
-          function checkOrderStatus() {
-              $.ajax({
-                  type: "GET",
-                  dataType: "json",
-                  url: `/pay/check-status/{{.TradeId}}`,
-                  timeout: 10000,
-                  success(response) {
-                      if (response.data.status === 2) {
-                          layer.msg('支付成功，正在跳转中...', { icon: 16, shade: 0.01, time: 20000 });
-                          window.location.href = "{{.RedirectUrl}}";
-                      } else {
-                          setTimeout(checkOrderStatus, 2000);
-                      }
-                  },
-                  error(jqXHR, textStatus, errorThrown) {
-                      console.error("检查支付状态时发生错误:", textStatus, errorThrown);
-                      setTimeout(checkOrderStatus, 2000);
-                  },
-              });
-          }
+      // 优化状态检查
+      function checkOrderStatus() {
+        $.ajax({
+          type: "GET",
+          dataType: "json",
+          url: `/pay/check-status/{{.TradeId}}`,
+          timeout: 10000,
+          success(response) {
+            if (response.data.status === 2) {
+              showSuccessModal();
+              setTimeout(() => {
+                window.location.href = "{{.RedirectUrl}}";
+              }, 2000);
+            } else {
+              setTimeout(checkOrderStatus, 2000);
+            }
+          },
+          error(jqXHR, textStatus, errorThrown) {
+            console.error("检查支付状态时发生错误:", textStatus, errorThrown);
+            setTimeout(checkOrderStatus, 2000);
+          },
+        });
+      }
 
-          checkOrderStatus(); // 直接调用检查支付状态
+      // 生成二维码
+      $('.qr-code').qrcode({
+        text: "{{.Token}}",
+        width: 180,
+        height: 180,
+        foreground: "#000000",
+        background: "#ffffff",
+        correctLevel: 0, // 提高容错率
       });
+
+      function toggleDetails() {
+        const details = document.getElementById("details");
+        details.classList.toggle("show");
+
+        const toggleBtn = document.querySelector(".details-toggle");
+        const svg = toggleBtn.querySelector("svg");
+
+        if (details.classList.contains("show")) {
+          svg.style.transform = "rotate(180deg)";
+        } else {
+          svg.style.transform = "rotate(0)";
+        }
+      }
+
+      // 启动所有功能
+      clock();
+      checkOrderStatus();
     </script>
   </body>
 </html>
