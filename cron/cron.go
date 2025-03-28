@@ -38,7 +38,46 @@ var httpClient = &http.Client{
 }
 
 // 定义一个任务结构体 UsdtRateJob
+// 负责定期检查未支付订单的支付状态，并在支付成功后更新订单状态、发送通知和回调
 type UsdtCheckJob struct{}
+
+// ExpiredOrdersJob 处理过期订单的任务结构体
+// 负责定期检查并处理已过期的未支付订单
+type ExpiredOrdersJob struct{}
+
+// Run 实现 cron.Job 接口的 Run 方法，处理过期订单
+func (j ExpiredOrdersJob) Run() {
+	// 查询已过期的订单
+	var orders []sdb.Orders
+	if err := sdb.SDB.Where("status = ?", sdb.StatusExpired).Find(&orders).Error; err != nil {
+		log.Logger.Info("查询过期订单失败", zap.Any("err", err))
+		return
+	}
+
+	if len(orders) == 0 {
+		log.Logger.Info("没有过期的订单需要处理")
+		return
+	}
+
+	// 批量删除过期订单
+	for _, order := range orders {
+		err := sdb.SDB.Transaction(func(tx *gorm.DB) error {
+			// 删除过期订单
+			if err := tx.Delete(&order).Error; err != nil {
+				log.Logger.Info("删除过期订单失败", zap.Any("err", err))
+				return err
+			}
+			return nil
+		})
+
+		if err != nil {
+			log.Logger.Info("处理过期订单失败", zap.Any("err", err), zap.String("trade_id", order.TradeId))
+			continue
+		}
+
+		log.Logger.Info("订单已删除", zap.String("trade_id", order.TradeId))
+	}
+}
 
 // 定义一个异步请求参数的结构体
 
@@ -55,62 +94,53 @@ type UsdtCheckJob struct{}
 
 // 实现 cron.Job 接口的 Run 方法
 func (j UsdtCheckJob) Run() {
-	// 执行任务的具体逻辑
-
-	// 查询订单表中状态为未支付的订单,可能存在多个订单，所以用切片来接受结果
+	// 查询所有未支付状态的订单
 	var order []sdb.Orders
 	if err := sdb.SDB.Where("status = ?", sdb.StatusWaitPay).Find(&order).Error; err != nil {
 		log.Logger.Info("订单查询失败", zap.Any("err", err))
 		return
 	}
+
+	// 如果没有未支付订单，直接返回
 	if len(order) == 0 {
 		log.Logger.Info("没有未支付的订单")
-		// 查询不到符合要求的订单，直接返回
 		return
-
 	}
-	for _, v := range order {
-		// 查询支付转账的情况，传入的参数是每个订单里面的钱包地址和查询的开始时间戳和结束时间戳
-		// 返回的是一个结构体
-		td := tron.GetTransactions(v.Token, v.StartTime, v.ExpirationTime)
-		// 判断返回的结构体里面的金额是否等于订单的实际金额「这里需要判断的USDT的数量」
 
-		if v.ActualAmount == td.Quant {
-			// 使用 Transaction 简化事务处理
+	// 遍历每个未支付订单
+	for _, v := range order {
+		// 调用TRON API查询指定时间范围内的转账交易
+		td := tron.GetTransactions(v.Token, v.StartTime, v.ExpirationTime)
+
+		// 验证转账金额是否匹配订单金额且交易ID不为空
+		if v.ActualAmount == td.Quant && td.TransactionID != "" {
+			// 使用事务更新订单状态
 			err := sdb.SDB.Transaction(func(tx *gorm.DB) error {
-				// 当金额相等的时候，则将订单状态改为已支付
+				// 更新订单状态为支付成功
 				v.Status = sdb.StatusPaySuccess
-				// 将订单的block_transaction_id设置为查询到的交易id「保存的是交易哈希值」
+				// 记录区块链交易ID
 				v.BlockTransactionId = td.TransactionID
-				// 先保存到数据库里面
-				// sdb.SDB.Save(&v)
-				// 事务回调函数内部始终使用 tx 参数进行操作，这是GORM事务的正确使用方式
+
+				// 保存更新到数据库
 				if err := tx.Save(&v).Error; err != nil {
 					log.Logger.Info("更新数据库表失败", zap.Any("err", err))
 					return err
 				}
-
-				// // 发送Bark通知|| 异步进程发送通知
-				// go notification.Start(v)
-
 				return nil
 			})
+
+			// 事务成功后，异步处理回调通知
 			if err == nil {
-
-				// 异步回调
 				go j.processCallback(v)
-
 			} else {
 				log.Logger.Info("已经检查到了支付金额，但更新数据库表失败", zap.Any("err", err))
 			}
-			// if err != nil {
-			// 	log.Logger.Info("已经检查到了支付金额，但更新数据库表失败", zap.Any("err", err))
-			// }
 		}
 	}
-
 }
 
+// Start 启动定时任务
+// 初始化并启动定时任务调度器，包括USDT支付检查和过期订单处理
 func Start() {
 	// 创建一个新的 Cron 调度器
 
@@ -120,7 +150,12 @@ func Start() {
 	// 每 5 秒执行一次 UsdtRateJob 任务
 	_, err := c.AddJob("@every 5s", UsdtCheckJob{})
 	if err != nil {
-		log.Logger.Info("任务添加失败")
+		log.Logger.Info("未支付订单任务添加失败")
+	}
+	// 每天执行一次过期订单清理任务
+	_, err = c.AddJob("@daily", ExpiredOrdersJob{})
+	if err != nil {
+		log.Logger.Info("订单清理任务添加失败")
 	}
 
 	// 启动 Cron 调度器
@@ -249,11 +284,15 @@ func (j UsdtCheckJob) processCallback(v sdb.Orders) {
 	for i := 0; i < 5; i++ {
 		ok, err := sendAsyncPost(v.NotifyUrl, paymentNotification)
 		if ok == "ok" {
-			v.CallBackConfirm = sdb.CallBackConfirmOk
-			// sdb.SDB.Save(&v)
-			// 事务回调函数内部始终使用 tx 参数进行操作，这是GORM事务的正确使用方式
-			sdb.SDB.Save(&v)
-			log.Logger.Info("已经确认订单支付成功，并把回调CallBackConfirm设置为1")
+			err := sdb.SDB.Transaction(func(tx *gorm.DB) error {
+				v.CallBackConfirm = sdb.CallBackConfirmOk
+				return tx.Save(&v).Error
+			})
+			if err != nil {
+				log.Logger.Info("更新回调确认状态失败", zap.Any("err", err))
+			} else {
+				log.Logger.Info("已经确认订单支付成功，并把回调CallBackConfirm设置为1")
+			}
 
 			break
 		}
