@@ -63,7 +63,12 @@ func (j UsdtCheckJob) Run() {
 		log.Logger.Info("订单查询失败", zap.Any("err", err))
 		return
 	}
+	if len(order) == 0 {
+		log.Logger.Info("没有未支付的订单")
+		// 查询不到符合要求的订单，直接返回
+		return
 
+	}
 	for _, v := range order {
 		// 查询支付转账的情况，传入的参数是每个订单里面的钱包地址和查询的开始时间戳和结束时间戳
 		// 返回的是一个结构体
