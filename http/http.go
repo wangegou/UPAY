@@ -47,12 +47,12 @@ func Init() {
 
 	// 配置 CORS 中间件
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},                                       // 允许的源
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}, // 允许的方法
-		AllowHeaders:     []string{"Origin", "Content-Type"},                  // 允许的头
-		ExposeHeaders:    []string{"Content-Length"},                          // 可见的头
-		AllowCredentials: true,                                                // 允许携带凭据
-		MaxAge:           10 * time.Minute,                                    // 缓存时间
+		AllowOrigins:     []string{"*"},                      // 允许的源
+		AllowMethods:     []string{"GET", "POST"},            // 允许的方法
+		AllowHeaders:     []string{"Origin", "Content-Type"}, // 允许的头
+		ExposeHeaders:    []string{"Content-Length"},         // 可见的头
+		AllowCredentials: true,                               // 允许携带凭据
+		MaxAge:           10 * time.Minute,                   // 缓存时间
 	}))
 
 	// 修改静态文件和模板的配置
