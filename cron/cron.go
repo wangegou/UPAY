@@ -152,7 +152,7 @@ func Start() {
 	if err != nil {
 		log.Logger.Info("未支付订单任务添加失败")
 	}
-	// 每天执行一次过期订单清理任务
+	// 每30分钟执行一次过期订单清理任务
 	_, err = c.AddJob("@every 30m", ExpiredOrdersJob{})
 	if err != nil {
 		log.Logger.Info("订单清理任务添加失败")
