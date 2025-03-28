@@ -53,7 +53,14 @@ func Start(order sdb.Orders) {
 		Status = "等待支付"
 	}
 
-	body := fmt.Sprintf("订单号:%s\n 支付金额%.2f\n支付状态:%s\n区块ID:%s\n", order.TradeId, order.ActualAmount, Status, order.BlockTransactionId)
+	var CallBackConfirm string
+	if order.CallBackConfirm == sdb.CallBackConfirmOk {
+		CallBackConfirm = "已回调"
+	} else {
+		CallBackConfirm = "未回调"
+	}
+
+	body := fmt.Sprintf("订单号:%s\n 支付金额%.2f\n支付状态:%s\n区块ID:%s\n回调状态：%s\n", order.TradeId, order.ActualAmount, Status, order.BlockTransactionId, CallBackConfirm)
 	// body := "您的订单已成功创建！\n感谢您的购买！\n请查看您的订单详情。"
 
 	// 发送通知

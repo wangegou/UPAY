@@ -28,6 +28,15 @@ import (
 	"gorm.io/gorm"
 )
 
+// 在文件顶部定义全局HTTP客户端
+var httpClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+	},
+}
+
 // 定义一个任务结构体 UsdtRateJob
 type UsdtCheckJob struct{}
 
@@ -69,54 +78,29 @@ func (j UsdtCheckJob) Run() {
 				// 将订单的block_transaction_id设置为查询到的交易id「保存的是交易哈希值」
 				v.BlockTransactionId = td.TransactionID
 				// 先保存到数据库里面
-				sdb.SDB.Save(&v)
-
-				// 发送Bark通知
-				notification.Start(v)
-
-				// 解锁钱包地址和金额
-				address_amount := fmt.Sprintf("%s_%f", v.Token, v.ActualAmount)
-				cx := context.Background()
-				err := rdb.RDB.Del(cx, address_amount).Err()
-				if err != nil {
-					log.Logger.Info("钱包地址和金额解锁失败")
+				// sdb.SDB.Save(&v)
+				// 事务回调函数内部始终使用 tx 参数进行操作，这是GORM事务的正确使用方式
+				if err := tx.Save(&v).Error; err != nil {
+					log.Logger.Info("更新数据库表失败", zap.Any("err", err))
 					return err
 				}
-				// 异步回调
 
-				notification := dto.PaymentNotification_request{
-					TradeID:            v.TradeId,
-					OrderID:            v.OrderId,
-					Amount:             v.Amount,
-					ActualAmount:       v.ActualAmount,
-					Token:              v.Token,
-					BlockTransactionID: v.BlockTransactionId,
-					Status:             v.Status,
-				}
-				// 生成签名
-				signature := generateSignature(notification)
-				notification.Signature = signature
-				// 异步回调5次
-				for i := 0; i < 5; i++ {
-					ok, err := sendAsyncPost(v.NotifyUrl, notification)
-					if err != nil {
+				// // 发送Bark通知|| 异步进程发送通知
+				// go notification.Start(v)
 
-						log.Logger.Info("异步回调失败", zap.Any("err", err))
-						// 回调次数+1
-						sdb.SDB.Model(&v).Update("callback_num", i+1)
-					}
-					if ok == "ok" {
-						v.CallBackConfirm = sdb.CallBackConfirmOk
-						sdb.SDB.Save(&v)
-						log.Logger.Info("已经确认订单支付成功，并把回调CallBackConfirm设置为1")
-						break
-					}
-				}
 				return nil
 			})
-			if err != nil {
+			if err == nil {
+
+				// 异步回调
+				go j.processCallback(v)
+
+			} else {
 				log.Logger.Info("已经检查到了支付金额，但更新数据库表失败", zap.Any("err", err))
 			}
+			// if err != nil {
+			// 	log.Logger.Info("已经检查到了支付金额，但更新数据库表失败", zap.Any("err", err))
+			// }
 		}
 	}
 
@@ -124,7 +108,9 @@ func (j UsdtCheckJob) Run() {
 
 func Start() {
 	// 创建一个新的 Cron 调度器
-	c := cron.New()
+
+	// 如果上一次任务还在运行，新的任务执行时间到了，则等待上一次任务完成后再执行
+	c := cron.New(cron.WithChain(cron.DelayIfStillRunning(cron.DefaultLogger)))
 
 	// 每 5 秒执行一次 UsdtRateJob 任务
 	_, err := c.AddJob("@every 5s", UsdtCheckJob{})
@@ -157,8 +143,9 @@ func sendAsyncPost(url string, notification dto.PaymentNotification_request) (st
 	req.Header.Set("Content-Type", "application/json")
 
 	// 发送请求
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	// client := &http.Client{Timeout: 10 * time.Second}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -218,4 +205,73 @@ func generateSignature(data dto.PaymentNotification_request) string {
 	// 计算 MD5 哈希值
 	hash := md5.Sum([]byte(signatureString))
 	return hex.EncodeToString(hash[:]) // 转为十六进制字符串
+}
+
+// 解锁钱包地址和金额
+func unlockWalletAddressAndAmount(v sdb.Orders) {
+	// 解锁钱包地址和金额
+	address_amount := fmt.Sprintf("%s_%f", v.Token, v.ActualAmount)
+	cx := context.Background()
+	err := rdb.RDB.Del(cx, address_amount).Err()
+	if err != nil {
+		log.Logger.Info("钱包地址和金额解锁失败", zap.Any("err", err))
+		// return err
+	}
+}
+
+func (j UsdtCheckJob) processCallback(v sdb.Orders) {
+	// 解锁钱包地址和金额|| 异步进程解锁钱包地址和金额
+	go unlockWalletAddressAndAmount(v)
+
+	// 异步回调
+
+	paymentNotification := dto.PaymentNotification_request{
+		TradeID:            v.TradeId,
+		OrderID:            v.OrderId,
+		Amount:             v.Amount,
+		ActualAmount:       v.ActualAmount,
+		Token:              v.Token,
+		BlockTransactionID: v.BlockTransactionId,
+		Status:             v.Status,
+	}
+	// 生成签名
+	signature := generateSignature(paymentNotification)
+	paymentNotification.Signature = signature
+	// 异步回调最大次数5次
+
+	// 使用事务简化回调确认
+
+	for i := 0; i < 5; i++ {
+		ok, err := sendAsyncPost(v.NotifyUrl, paymentNotification)
+		if ok == "ok" {
+			v.CallBackConfirm = sdb.CallBackConfirmOk
+			// sdb.SDB.Save(&v)
+			// 事务回调函数内部始终使用 tx 参数进行操作，这是GORM事务的正确使用方式
+			sdb.SDB.Save(&v)
+			log.Logger.Info("已经确认订单支付成功，并把回调CallBackConfirm设置为1")
+
+			break
+		}
+		if err != nil {
+
+			log.Logger.Info("异步回调失败", zap.Any("err", err))
+			// 回调次数+1
+			// sdb.SDB.Model(&v).Update("callback_num", i+1)
+			// sdb.SDB.Model(&v).UpdateColumn("callback_num", gorm.Expr("callback_num + 1"))
+			// if err := sdb.SDB.Model(&v).UpdateColumn("callback_num", gorm.Expr("callback_num + ?", 1)).Error; err != nil {
+			// 	log.Logger.Info("更新回调失败次数失败", zap.Any("err", err))
+			// }
+			if err := sdb.SDB.Model(&v).UpdateColumn("callback_num", gorm.Expr("callback_num + ?", 1)).Error; err != nil {
+				log.Logger.Info("更新回调失败次数失败", zap.Any("err", err))
+			}
+			// 延迟0.5秒
+			time.Sleep(500 * time.Millisecond)
+
+			// 进入下次循环
+			// continue
+		}
+	}
+	// 发送Bark通知|| 异步进程发送通知
+	go notification.Start(v)
+
 }
