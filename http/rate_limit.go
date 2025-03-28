@@ -1,7 +1,6 @@
 package http
 
 import (
-	"U_PAY/log"
 	"context"
 	"net/http"
 
@@ -9,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis_rate/v10"
-	"go.uber.org/zap"
 )
 
 // RateLimitMiddleware 创建一个限流中间件
@@ -26,7 +24,7 @@ func RateLimitMiddleware() gin.HandlerFunc {
 				realIP = c.ClientIP()
 			}
 		}
-		log.Logger.Info("当前用户IP地址: ", zap.String("realIP", realIP))
+		// log.Logger.Info("当前用户IP地址: ", zap.String("realIP", realIP))
 
 		key := "rate_limit:" + realIP
 
