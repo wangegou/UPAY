@@ -32,9 +32,31 @@
 
 与原项目的使用差别是：1 不需要初始化数据库，2，启动命令后面无需任何参数
 
+## 流量限制需要配置 NGINX【可选配置】
+
+- \# 真实 IP 解析配置（新增部分）
+- set_real_ip_from 127.0.0.1;
+
+\# 示例：Cloudflare 的 IPv4/IPv6 地址
+
+- set_real_ip_from 103.21.244.0/22;
+- set_real_ip_from 104.16.0.0/13;
+- set_real_ip_from 2400:cb00::/32;
+
+- real_ip_header X-Forwarded-For;
+- real_ip_recursive on;
+
+- \# 全局代理标头（新增部分）
+- proxy_set_header Host $host;
+- proxy_set_header X-Real-IP $remote_addr;
+- proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+- proxy_set_header X-Forwarded-Proto $scheme;
+
+![UPAY服务器配置](./images/Server.nane upey.1oMpp.lcu.png)
+
 # API 文档
 
-参照原 EPUSDT 的即可
+https://github.com/wangegou/UPAY/blob/master/API.md
 
 ### 在线测试：
 

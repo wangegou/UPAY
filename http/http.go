@@ -42,6 +42,9 @@ func Init() {
 	// 开始路由测试
 	r := gin.Default()
 
+	// 添加限流中间件
+	r.Use(RateLimitMiddleware())
+
 	// 配置 CORS 中间件
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},                                       // 允许的源
