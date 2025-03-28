@@ -52,7 +52,7 @@
 - proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 - proxy_set_header X-Forwarded-Proto $scheme;
 
-![UPAY服务器配置](./images/Server.nane upey.1oMpp.lcu.png)
+![UPAY服务器配置](https://github.com/wangegou/UPAY/blob/master/images/Server.nane%20upey.1oMpp.lcu.png)
 
 # API 文档
 
