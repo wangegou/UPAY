@@ -59,8 +59,11 @@ func GetTransactionsGrid(toAddress string, startTime int64, endTime int64) (Tran
 	// 注意：这里硬编码了合约地址和 limit=1，根据需要可以将其作为参数传入
 	contractAddress := "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" // USDT TRC20 合约地址
 	limit := 1
-	apiURL := fmt.Sprintf("https://api.trongrid.io/v1/accounts/%s/transactions/trc20?contract_address=%s&limit=%d&only_confirmed=true",
-		toAddress, contractAddress, limit)
+	min_timestamp := startTime
+	max_timestamp := endTime
+
+	apiURL := fmt.Sprintf("https://api.trongrid.io/v1/accounts/%s/transactions/trc20?contract_address=%s&limit=%d&only_confirmed=true&min_block_timestamp=%v&max_block_timestamp=%v",
+		toAddress, contractAddress, limit, min_timestamp, max_timestamp)
 
 	// 2. 发送 HTTP GET 请求
 	resp, err := http.Get(apiURL)
@@ -86,21 +89,22 @@ func GetTransactionsGrid(toAddress string, startTime int64, endTime int64) (Tran
 	if err != nil {
 		return details, fmt.Errorf("解析 JSON 失败: %w", err)
 	}
-	// 检查block_timestamp	时间是否在指定范围内
-	if apiResponse.Data[0].BlockTimestamp > startTime && apiResponse.Data[0].BlockTimestamp < endTime {
 
-		// 5. 检查 API 返回是否成功以及是否有数据
-		if !apiResponse.Success {
-			details.FinalResult = "API request not successful"
-			return details, fmt.Errorf("API 报告请求不成功")
-		}
-		details.FinalResult = "Success" // API 请求成功
+	// 5. 检查 API 返回是否成功以及是否有数据
+	if !apiResponse.Success {
+		details.FinalResult = "API request not successful"
+		return details, fmt.Errorf("API 报告请求不成功")
+	}
+	details.FinalResult = "Success" // API 请求成功
 
-		if len(apiResponse.Data) == 0 {
-			details.FinalResult = "Success, but no transactions found"
-			// 没有找到交易记录，返回空的 details 但没有错误
-			return details, nil
-		}
+	if len(apiResponse.Data) == 0 {
+		details.FinalResult = "Success, but no transactions found"
+		// 没有找到交易记录，返回空的 details 但没有错误
+		return details, fmt.Errorf("没有找到交易记录")
+	}
+
+	// 检查block_timestamp	时间是否在指定范围内,且，建议方向是到toAddress的记录,且，代币是USDT
+	if (apiResponse.Data[0].BlockTimestamp > startTime && apiResponse.Data[0].BlockTimestamp < endTime) && (apiResponse.Data[0].To == toAddress) && (apiResponse.Data[0].TokenInfo.Symbol == "USDT") {
 
 		// 6. 提取第一条交易记录的信息
 		transaction := apiResponse.Data[0]
@@ -133,7 +137,7 @@ func GetTransactionsGrid(toAddress string, startTime int64, endTime int64) (Tran
 		details.FinalResult = "Success, but no transactions found"
 		// 没有找到交易记录，返回空的 details ，和时间不符的错误
 		details.FinalResult = "Transaction timestamp not in specified range"
-		return details, fmt.Errorf("交易时间戳 %d 不在指定范围内 [%d, %d]",
+		return details, fmt.Errorf("交易时间戳 %d 不在指定范围内 [%d, %d] 或者没有找到入账记录或者代币非USDT",
 			apiResponse.Data[0].BlockTimestamp, startTime, endTime)
 	}
 }
