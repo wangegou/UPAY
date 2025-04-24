@@ -166,12 +166,12 @@ func Start() {
 	if err != nil {
 		log.Logger.Info("未支付订单任务添加失败")
 	}
-	// 每30分钟执行一次过期订单清理任务
-	_, err = c.AddJob("@every 30m", ExpiredOrdersJob{})
+	// 每天凌晨3点执行过期订单清理任务
+	_, err = c.AddJob("0 5 * * *", ExpiredOrdersJob{})
 	if err != nil {
 		log.Logger.Info("订单清理任务添加失败")
 	}
-
+	log.Logger.Info("订单清理任务已完成")
 	// 启动 Cron 调度器
 	c.Start()
 
@@ -298,7 +298,7 @@ func (j UsdtCheckJob) processCallback(v sdb.Orders) {
 	for i := 0; i < 5; i++ {
 		ok, err := sendAsyncPost(v.NotifyUrl, paymentNotification)
 		if ok == "ok" {
-			err := sdb.SDB.Transaction(func(tx *gorm.DB) error {
+			err = sdb.SDB.Transaction(func(tx *gorm.DB) error {
 				v.CallBackConfirm = sdb.CallBackConfirmOk
 				return tx.Save(&v).Error
 			})
