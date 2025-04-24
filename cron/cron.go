@@ -109,9 +109,23 @@ func (j UsdtCheckJob) Run() {
 
 	// 遍历每个未支付订单
 	for _, v := range order {
+		var td tron.TransferDetails
+		var err error
 		// 调用TRON API查询指定时间范围内的转账交易
-		td := tron.GetTransactions(v.Token, v.StartTime, v.ExpirationTime)
+		td = tron.GetTransactions(v.Token, v.StartTime, v.ExpirationTime)
+		if td.TransactionID == "" {
+			// 记录第一次查询结果为空
+			log.Logger.Info("第一个API未查询到交易记录，尝试第二个API")
+			// 调用第二个API查询指定时间范围内的转账交易
+			td, err = tron.GetTransactionsGrid(v.Token, v.StartTime, v.ExpirationTime)
+			if err != nil {
+				log.Logger.Error("第二个API查询失败", zap.Error(err))
+				// 记录第二个API查询失败
 
+				continue
+			}
+
+		}
 		// 验证转账金额是否匹配订单金额且交易ID不为空
 		if v.ActualAmount == td.Quant && td.TransactionID != "" {
 			// 使用事务更新订单状态
